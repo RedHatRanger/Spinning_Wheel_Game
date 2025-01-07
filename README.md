@@ -1,6 +1,3 @@
-# Spinning_Wheel_Game
-This game will choose a random name
-
 # Spinning Wheel Game
 
 A Python-based spinning wheel game that allows you to input a list of names, spin the wheel, and land on a random name. The selected name is removed from the pool until all names have been chosen, ensuring fairness. Once all names are selected, the pool is reset automatically.
