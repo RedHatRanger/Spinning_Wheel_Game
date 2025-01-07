@@ -98,10 +98,9 @@ def draw_wheel(names, angle):
 
 def pick_winner(names, final_angle):
     """
-    Determine the segment that is at the top of the wheel (under the pointer).
-    The pointer is physically drawn at the top, which is 90° from standard x-axis in math.
-    We shift the angle by half a segment so that the pointer selects the 'middle'
-    of the correct wedge rather than the boundary.
+    Determine which name is at the top under the pointer.
+    The pointer is physically drawn near -90° in standard math (or +90° in Pygame’s screen coordinates).
+    We shift by half a wedge so the pointer lands in the middle of the correct segment.
     """
     if not names:
         return None
@@ -109,9 +108,9 @@ def pick_winner(names, final_angle):
     num_segments = len(names)
     segment_size = 360 / num_segments
 
-    # +90 aligns the top pointer with standard x-axis math
-    # + (segment_size / 2) ensures the pointer lands in the middle of the correct segment
-    adjusted_angle = (final_angle + 90 + (segment_size / 2)) % 360
+    # +90 aligns the top pointer with standard math’s 0-degree axis
+    # + (segment_size / 2) ensures we land in the *middle* of that segment
+    adjusted_angle = (final_angle + 90 + segment_size / 2) % 360
 
     index = int(adjusted_angle // segment_size) % num_segments
     return names[index]
