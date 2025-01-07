@@ -47,7 +47,7 @@ used_names = []                          # Used since last reset
 # Rotation parameters
 angle_offset = 0.0       # Current rotation angle in degrees
 spin_speed = 0.0         # How many degrees per frame we rotate
-SPIN_DECAY = 0.98        # Friction multiplier each frame
+SPIN_DECAY = 0.99        # Friction multiplier each frame
 MIN_SPIN_SPEED = 0.5     # Threshold to stop spinning
 winner = None            # Name that landed last
 spinning = False         # Are we currently spinning?
