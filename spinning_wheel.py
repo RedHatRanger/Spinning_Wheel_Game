@@ -33,53 +33,45 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Spinning Wheel Game")
 clock = pygame.time.Clock()
 
-# A basic font for text
 font = pygame.font.Font(None, 36)
 
-# For convenience, pre-calculate center
 center_x, center_y = WIDTH // 2, HEIGHT // 2
 radius = 250  # Radius of the wheel
 
 # Prepare name pools
-current_names = random.sample(ALL_NAMES, NUM_NAMES)  # Names currently on the wheel
-remaining_pool = [name for name in ALL_NAMES if name not in current_names]  # Remaining pool
+current_names = random.sample(ALL_NAMES, NUM_NAMES)
+remaining_pool = [n for n in ALL_NAMES if n not in current_names]
 
 # Rotation parameters
-angle_offset = 0.0       # Current rotation angle in degrees
-spin_speed = 0.0         # How many degrees per frame we rotate
-SPIN_DECAY = 0.99        # Friction multiplier each frame
-MIN_SPIN_SPEED = 0.5     # Threshold to stop spinning
-winner = None            # Name that landed last
-spinning = False         # Are we currently spinning?
+angle_offset = 0.0     # Current rotation angle in degrees
+spin_speed = 0.0       # Degrees to rotate per frame
+SPIN_DECAY = 0.99      # How quickly spin speed decays per frame
+MIN_SPIN_SPEED = 0.5   # Threshold to stop the spin
+winner = None          # Last chosen winner
+spinning = False       # Are we currently spinning?
 
-def draw_wheel(names, angle):
+def draw_wheel(names, angle_degs):
     """
-    Draw the wheel with equal segments for each name.
-    `angle` is in degrees, representing how much the wheel is rotated.
-    We rotate the drawing by -90° so that segment 0 is physically at the top.
+    Draw the wheel so that wedge 0 is physically at the top when angle_degs=0.
+    We achieve this by subtracting 90° (pi/2) from the wheel's angle in radians.
     """
     num_segments = len(names)
     if num_segments == 0:
         return
 
-    # Convert degrees to radians for math functions and shift by -90° (pi/2)
-    angle_rad = math.radians(angle) - (math.pi / 2)
+    # Convert angle_degs to radians and shift by -90° to put segment 0 at the top
+    angle_rad = math.radians(angle_degs) - math.pi / 2
 
-    # Each segment's angular size in radians
     segment_angle = 2 * math.pi / num_segments
 
     for i, name in enumerate(names):
-        # Starting angle (in radians) for this segment
-        start_angle = i * segment_angle + angle_rad
-        # Ending angle
+        start_angle = angle_rad + i * segment_angle
         end_angle = start_angle + segment_angle
-
-        # Pick a color
         color = COLORS[i % len(COLORS)]
 
-        # Draw the segment as a polygon (center + radial points)
+        # Draw the segment as a polygon (center + points along the arc)
         points = [(center_x, center_y)]
-        steps = 30  # Number of points along the arc to create smooth edges
+        steps = 30  # how many points for the arc's smoothness
         for step in range(steps + 1):
             theta = start_angle + (end_angle - start_angle) * (step / steps)
             x = center_x + radius * math.cos(theta)
@@ -89,18 +81,20 @@ def draw_wheel(names, angle):
         pygame.draw.polygon(screen, color, points)
 
         # Draw the name in the middle of the segment
-        text_angle = (start_angle + end_angle) / 2
-        text_x = center_x + (radius * 0.6) * math.cos(text_angle)
-        text_y = center_y + (radius * 0.6) * math.sin(text_angle)
+        mid_angle = (start_angle + end_angle) / 2
+        text_x = center_x + (radius * 0.6) * math.cos(mid_angle)
+        text_y = center_y + (radius * 0.6) * math.sin(mid_angle)
         text_surface = font.render(name, True, (0, 0, 0))
         text_rect = text_surface.get_rect(center=(text_x, text_y))
         screen.blit(text_surface, text_rect)
 
 def pick_winner(names, final_angle):
     """
-    Determine which name is at the top under the pointer.
-    Since we rotated the wheel so wedge 0 is at angle=0 at the top,
-    we only do a half-wedge shift so the pointer lands in the middle of the wedge.
+    Determine which wedge is at the top, given that we've rotated
+    the drawing so wedge 0 is at angle=0 at the top.
+    
+    We add half a wedge to final_angle so the pointer lands in the
+    middle of the wedge, rather than on the boundary.
     """
     if not names:
         return None
@@ -108,29 +102,26 @@ def pick_winner(names, final_angle):
     num_segments = len(names)
     segment_size = 360 / num_segments
 
-    # Just shift by half a segment so we land in the wedge’s center
+    # Adding half a wedge shifts the pointer into the center of the wedge
     adjusted_angle = (final_angle + segment_size / 2) % 360
-
-    index = int(adjusted_angle // segment_size) % num_segments
+    index = int(adjusted_angle // segment_size)
     return names[index]
 
-def update_wheel(winner):
+def update_wheel(chosen_name):
     """
-    Remove the winner from the current wheel and add a new name from the remaining pool,
-    if available.
+    Remove the winner from current_names and add a new name from the pool.
     """
     global current_names, remaining_pool
 
-    if winner in current_names:
-        current_names.remove(winner)
-    
+    if chosen_name in current_names:
+        current_names.remove(chosen_name)
     if remaining_pool:
         new_name = random.choice(remaining_pool)
-        current_names.append(new_name)
         remaining_pool.remove(new_name)
+        current_names.append(new_name)
 
 def main():
-    global angle_offset, spin_speed, spinning, winner, current_names, remaining_pool
+    global angle_offset, spin_speed, spinning, winner
 
     running = True
     while running:
@@ -140,50 +131,46 @@ def main():
                 running = False
 
             elif event.type == pygame.KEYDOWN:
-                # Press Esc to quit
+                # Press ESC to quit
                 if event.key == pygame.K_ESCAPE:
                     running = False
-
-                # Press Space to spin (only if not already spinning)
+                # Press SPACE to spin (only if not already spinning)
                 elif event.key == pygame.K_SPACE and not spinning:
                     spinning = True
                     winner = None
-                    # Random spin speed between 10-15 degrees/frame
-                    spin_speed = random.uniform(10, 15)
+                    spin_speed = random.uniform(10, 15)  # random degrees/frame
 
-        # Update
+        # Spin logic
         if spinning:
             angle_offset += spin_speed
             spin_speed *= SPIN_DECAY
-
-            # If speed is below threshold, stop spinning
             if spin_speed < MIN_SPIN_SPEED:
                 spinning = False
-                final = angle_offset % 360
-                winner = pick_winner(current_names, final)
-                if winner is not None:
+                final_angle = angle_offset % 360
+                winner = pick_winner(current_names, final_angle)
+                if winner:
                     update_wheel(winner)
 
         # Draw
-        screen.fill((255, 255, 255))  # white background
+        screen.fill((255, 255, 255))
         draw_wheel(current_names, angle_offset)
 
-        # Draw an indicator (pointer) at the top
+        # Draw the pointer at the top (red triangle)
         pointer_length = 30
         pygame.draw.polygon(
             screen, (255, 0, 0),
             [
-                (center_x, center_y - (radius + pointer_length)), # top point
-                (center_x - 10, center_y - radius),               # left corner
-                (center_x + 10, center_y - radius)                # right corner
+                (center_x, center_y - (radius + pointer_length)),  # top tip
+                (center_x - 10, center_y - radius),                # left
+                (center_x + 10, center_y - radius)                 # right
             ]
         )
 
-        # Draw winner text if we have one
+        # Show the winner at the bottom
         if winner:
-            text_surface = font.render(f"Winner: {winner}", True, (255, 0, 0))
-            rect = text_surface.get_rect(center=(WIDTH // 2, HEIGHT - 50))
-            screen.blit(text_surface, rect)
+            txt = font.render(f"Winner: {winner}", True, (255, 0, 0))
+            rect = txt.get_rect(center=(WIDTH // 2, HEIGHT - 50))
+            screen.blit(txt, rect)
 
         pygame.display.flip()
 
