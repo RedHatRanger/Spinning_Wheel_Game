@@ -23,7 +23,7 @@ A Python-based spinning wheel game that allows you to input a list of names, spi
 
 1. Clone the repository or download the project:
    ```bash
-   git clone https://github.com/your-repository/spinning-wheel-game.git
+   git clone https://github.com/RedHatRanger/Spinning_Wheel_Game.git
    cd spinning-wheel-game
    ```
 
