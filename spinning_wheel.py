@@ -4,11 +4,11 @@ import random
 import sys
 
 # --- Configuration ---
-NUM_NAMES = 20   # Set how many names to include
+NUM_NAMES = 10   # Number of names on the wheel at a time
 WIDTH, HEIGHT = 800, 600
 FPS = 60
 
-# List your names here (exactly NUM_NAMES entries if you like)
+# All names pool (full list of names to rotate into the wheel)
 ALL_NAMES = [
     "Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace", "Hannah",
     "Isaac", "Jack", "Karen", "Liam", "Mia", "Nina", "Oscar", "Paul",
@@ -41,8 +41,8 @@ center_x, center_y = WIDTH // 2, HEIGHT // 2
 radius = 250  # Radius of the wheel
 
 # Prepare name pools
-remaining_names = ALL_NAMES[:NUM_NAMES]  # The current active pool
-used_names = []                          # Used since last reset
+current_names = random.sample(ALL_NAMES, NUM_NAMES)  # Names currently on the wheel
+remaining_pool = [name for name in ALL_NAMES if name not in current_names]  # Remaining pool
 
 # Rotation parameters
 angle_offset = 0.0       # Current rotation angle in degrees
@@ -113,15 +113,23 @@ def pick_winner(names, final_angle):
     index = int(adjusted_angle // segment_size) % num_segments
     return names[index]
 
-def reset_pools():
-    """If all names are used, repopulate the remaining_names from used_names."""
-    global remaining_names, used_names
-    if len(remaining_names) == 0:
-        remaining_names = used_names[:]
-        used_names = []
+def update_wheel(winner):
+    """
+    Remove the winner from the current wheel and add a new name from the remaining pool,
+    if available.
+    """
+    global current_names, remaining_pool
+
+    if winner in current_names:
+        current_names.remove(winner)
+    
+    if remaining_pool:
+        new_name = random.choice(remaining_pool)
+        current_names.append(new_name)
+        remaining_pool.remove(new_name)
 
 def main():
-    global angle_offset, spin_speed, spinning, winner, remaining_names, used_names
+    global angle_offset, spin_speed, spinning, winner, current_names, remaining_pool
 
     running = True
     while running:
@@ -151,15 +159,13 @@ def main():
             if spin_speed < MIN_SPIN_SPEED:
                 spinning = False
                 final = angle_offset % 360
-                winner = pick_winner(remaining_names, final)
+                winner = pick_winner(current_names, final)
                 if winner is not None:
-                    used_names.append(winner)
-                    remaining_names.remove(winner)
-                    reset_pools()
+                    update_wheel(winner)
 
         # Draw
         screen.fill((255, 255, 255))  # white background
-        draw_wheel(remaining_names, angle_offset)
+        draw_wheel(current_names, angle_offset)
 
         # Draw an indicator (pointer) at the top (center_x, center_y - radius)
         pointer_length = 30
@@ -185,3 +191,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
