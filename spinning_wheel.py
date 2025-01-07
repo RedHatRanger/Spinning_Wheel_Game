@@ -15,7 +15,7 @@ ALL_NAMES = [
     "Quinn", "Rachel", "Steve", "Tina"
 ]
 
-# Colors to cycle through (feel free to add or remove)
+# Colors to cycle through
 COLORS = [
     (255, 69, 0),    # OrangeRed
     (30, 144, 255),  # DodgerBlue
@@ -33,7 +33,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Spinning Wheel Game")
 clock = pygame.time.Clock()
 
-# A basic font for text (can also use SysFont if you wish)
+# A basic font for text
 font = pygame.font.Font(None, 36)
 
 # For convenience, pre-calculate center
@@ -56,14 +56,14 @@ def draw_wheel(names, angle):
     """
     Draw the wheel with equal segments for each name.
     `angle` is in degrees, representing how much the wheel is rotated.
-    A pointer at the top (i.e., -90 degrees in standard math) will choose the segment.
+    We rotate the drawing by -90° so that segment 0 is physically at the top.
     """
     num_segments = len(names)
     if num_segments == 0:
         return
 
-    # Convert degrees to radians for math functions
-    angle_rad = math.radians(angle)
+    # Convert degrees to radians for math functions and shift by -90° (pi/2)
+    angle_rad = math.radians(angle) - (math.pi / 2)
 
     # Each segment's angular size in radians
     segment_angle = 2 * math.pi / num_segments
@@ -77,8 +77,8 @@ def draw_wheel(names, angle):
         # Pick a color
         color = COLORS[i % len(COLORS)]
 
-        # Draw the segment as a polygon “fan” (center + radial points)
-        points = [ (center_x, center_y) ]
+        # Draw the segment as a polygon (center + radial points)
+        points = [(center_x, center_y)]
         steps = 30  # Number of points along the arc to create smooth edges
         for step in range(steps + 1):
             theta = start_angle + (end_angle - start_angle) * (step / steps)
@@ -99,8 +99,8 @@ def draw_wheel(names, angle):
 def pick_winner(names, final_angle):
     """
     Determine which name is at the top under the pointer.
-    The pointer is physically drawn near -90° in standard math (or +90° in Pygame’s screen coordinates).
-    We shift by half a wedge so the pointer lands in the middle of the correct segment.
+    Since we rotated the wheel so wedge 0 is at angle=0 at the top,
+    we only do a half-wedge shift so the pointer lands in the middle of the wedge.
     """
     if not names:
         return None
@@ -108,9 +108,8 @@ def pick_winner(names, final_angle):
     num_segments = len(names)
     segment_size = 360 / num_segments
 
-    # +90 aligns the top pointer with standard math’s 0-degree axis
-    # + (segment_size / 2) ensures we land in the *middle* of that segment
-    adjusted_angle = (final_angle + 90 + segment_size / 2) % 360
+    # Just shift by half a segment so we land in the wedge’s center
+    adjusted_angle = (final_angle + segment_size / 2) % 360
 
     index = int(adjusted_angle // segment_size) % num_segments
     return names[index]
@@ -169,14 +168,14 @@ def main():
         screen.fill((255, 255, 255))  # white background
         draw_wheel(current_names, angle_offset)
 
-        # Draw an indicator (pointer) at the top (center_x, center_y - radius)
+        # Draw an indicator (pointer) at the top
         pointer_length = 30
         pygame.draw.polygon(
             screen, (255, 0, 0),
             [
-                (center_x, center_y - (radius + pointer_length)),
-                (center_x - 10, center_y - radius),
-                (center_x + 10, center_y - radius)
+                (center_x, center_y - (radius + pointer_length)), # top point
+                (center_x - 10, center_y - radius),               # left corner
+                (center_x + 10, center_y - radius)                # right corner
             ]
         )
 
@@ -193,4 +192,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
