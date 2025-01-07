@@ -99,20 +99,18 @@ def draw_wheel(names, angle):
 def pick_winner(names, final_angle):
     """
     Pick which segment is 'up' at the top after spinning stops.
-    By default, the pointer is at -90 deg (straight up).
-    So we add 90 deg to final_angle to figure out the absolute segment index.
+    By default, the pointer is at -90 degrees (straight up).
     """
     if not names:
         return None
 
     num_segments = len(names)
     # Normalize the angle to [0..360)
-    # Adding 90 means we consider "top" to be 0 degrees in segment land.
-    adjusted_angle = (final_angle + 90) % 360
+    adjusted_angle = (final_angle + 90) % 360  # Add 90 because the pointer is at -90 degrees
     # Each segment covers an equal slice
     segment_size = 360 / num_segments
     # Find which segment index is chosen
-    index = int(adjusted_angle // segment_size)
+    index = int(adjusted_angle // segment_size) % num_segments
     return names[index]
 
 def reset_pools():
