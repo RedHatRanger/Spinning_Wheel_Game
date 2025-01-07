@@ -4,7 +4,7 @@ import random
 import sys
 
 # --- Configuration ---
-NUM_NAMES = 25   # Set how many names to include
+NUM_NAMES = 20   # Set how many names to include
 WIDTH, HEIGHT = 800, 600
 FPS = 60
 
@@ -12,7 +12,7 @@ FPS = 60
 ALL_NAMES = [
     "Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace", "Hannah",
     "Isaac", "Jack", "Karen", "Liam", "Mia", "Nina", "Oscar", "Paul",
-    "Quinn", "Rachel", "Steve", "Tina", "Uma", "Victor", "Wendy", "Xander", "Zoe"
+    "Quinn", "Rachel", "Steve", "Tina"
 ]
 
 # Colors to cycle through (feel free to add or remove)
